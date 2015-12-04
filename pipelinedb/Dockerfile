@@ -17,9 +17,3 @@ RUN /scripts/install_extras.sh
 EXPOSE 5432
 
 CMD ["/scripts/startpipeline"]
-
-#USER pipeline
-#RUN ["pipeline-ctl", "-D", "/mnt/pipelinedb/data", "-w", "start"]
-#RUN ["psql", "-U", "pipeline", "-c", "CREATE DATABASE nginx"]
-#RUN ["psql", "-U", "pipeline", "-c", "CREATE TABLE accesslogs (container_id text, container_name text, source text, log text);"]
-#RUN ["pipeline-ctl", "-D", "/mnt/pipelinedb/data", "-w", "stop"]
