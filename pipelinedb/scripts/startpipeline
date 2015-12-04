@@ -1,0 +1,19 @@
+#!/bin/bash
+# ref. https://github.com/pipelinedb/pipelinedb/blob/0.8.1/pkg/docker/scripts/startpipeline
+
+set -e
+
+# check if the data directory already exists
+# if not, create it
+if [ ! -d "/mnt/pipelinedb/data" ]; then
+    mkdir -p /mnt/pipelinedb
+    chmod 777 /mnt/pipelinedb
+    su - pipeline -c "pipeline-init --encoding=UTF8 -D /mnt/pipelinedb/data"
+    su - pipeline -c "pipeline-ctl -D /mnt/pipelinedb/data -w start"
+    psql -U pipeline -c "ALTER USER pipeline PASSWORD 'pipeline'"
+    psql -U pipeline -c "CREATE TABLE accesslogs (container_id text, container_name text, source text, log text);"
+    su - pipeline -c "pipeline-ctl -D /mnt/pipelinedb/data -w stop"
+    cp /scripts/conf/*.conf /mnt/pipelinedb/data/
+fi
+
+su - pipeline -c "pipeline-server -D /mnt/pipelinedb/data"
