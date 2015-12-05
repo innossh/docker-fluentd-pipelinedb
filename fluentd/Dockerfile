@@ -56,3 +56,4 @@ EXPOSE 24224
 CMD exec fluentd -c /fluentd/etc/$FLUENTD_CONF -p /fluentd/plugins $FLUENTD_OPT
 
 RUN ["gem", "install", "fluent-plugin-postgres", "--no-rdoc", "--no-ri"]
+RUN ["gem", "install", "fluent-plugin-parser", "--no-rdoc", "--no-ri"]
