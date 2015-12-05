@@ -6,10 +6,11 @@ a sample docker containers for running Fluentd + pipelinedb
 
 ```sh
 $ docker-compose up -d
-# request to nginx
+# This could take a while.
+
+# Request to nginx several times
 $ curl http://<DOCKER_HOST>/
 
-# wait a little...
 $ psql -U pipeline -h<DOCKER_HOST> -p 5432 -W
 Password for user pipeline:
 psql (9.4.4)
@@ -17,11 +18,14 @@ Type "help" for help.
 
 pipeline=# \pset pager off
 Pager usage is off.
-pipeline=# select * from accesslogs limit 1;
-    remote    | host | user |        time         | method | path | code | size | referer |    agent
---------------+------+------+---------------------+--------+------+------+------+---------+-------------
- 192.168.99.1 | -    | -    | 2015-12-05 09:06:09 | GET    | /    | 200  |  612 | -       | curl/7.43.0
-(1 row)
+pipeline=# select * from v_nginx_accesslogs;
+       minute        |    path    | code | total_count
+---------------------+------------+------+-------------
+ 2015-12-05 11:07:00 | /          | 200  |           5
+ 2015-12-05 11:08:00 | /test.html | 200  |           2
+ 2015-12-05 11:08:00 | /test      | 404  |           1
+ 2015-12-05 11:08:00 | /          | 200  |           1
+(4 rows)
 
 pipeline=# \q
 ```
