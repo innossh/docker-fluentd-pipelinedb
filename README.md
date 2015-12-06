@@ -1,6 +1,19 @@
 # docker-fluentd-pipelinedb
 
-a sample docker containers for running Fluentd + pipelinedb
+a sample docker containers for running Fluentd + PipelineDB
+
+## Requirements
+
+- Docker Compose
+  - docker-py >= 1.4.0
+
+```
+$ docker-compose version
+docker-compose version: 1.5.1
+docker-py version: 1.5.0
+CPython version: 2.7.9
+OpenSSL version: OpenSSL 1.0.2a 19 Mar 2015
+```
 
 ## Usage
 
