@@ -10,7 +10,7 @@ if [ ! -d "/mnt/pipelinedb/data" ]; then
     chmod 777 /mnt/pipelinedb
     su - pipeline -c "pipeline-init --encoding=UTF8 -D /mnt/pipelinedb/data"
     su - pipeline -c "pipeline-ctl -D /mnt/pipelinedb/data -w start"
-    psql -U pipeline -c "ALTER USER pipeline PASSWORD 'pipeline'"
+    psql -U pipeline -c "ALTER USER pipeline PASSWORD 'pipeline';"
     psql -U pipeline << EOS
 CREATE CONTINUOUS VIEW v_nginx_accesslogs AS
 SELECT
@@ -21,6 +21,7 @@ count(*) AS total_count
 FROM nginx_accesslogs
 GROUP BY minute, path, code;
 EOS
+    psql -U pipeline -c "CREATE ROLE replicator WITH LOGIN REPLICATION;"
     su - pipeline -c "pipeline-ctl -D /mnt/pipelinedb/data -w stop"
     cp /scripts/conf/*.conf /mnt/pipelinedb/data/
 fi

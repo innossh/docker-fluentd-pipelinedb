@@ -3,6 +3,13 @@ pipelinedb:
   ports:
     - "5432:5432"
 
+pipelinedbslave:
+  build: ./pipelinedbslave
+  ports:
+    - "6544:6544"
+  links:
+    - "pipelinedb"
+
 fluentd:
   build: ./fluentd
   ports:
