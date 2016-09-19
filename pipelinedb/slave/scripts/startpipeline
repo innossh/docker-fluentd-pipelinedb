@@ -1,0 +1,27 @@
+#!/bin/bash
+# ref. https://raw.githubusercontent.com/pipelinedb/pipelinedb/0.9.5/pkg/docker/scripts/startpipeline
+
+set -e
+
+# Initialize database if:
+# 1) data directory does not exist
+#    (when data directory volume is not bind-mounted from host;
+#     example: docker run -d pipelinedb), or,
+# 2) data directory already exists, but is empty
+#    (when data directory volume has been bind-mounted from host;
+#     example: docker run -d -v host_volume:/mnt/pipelinedb/data pipelinedb).
+if [ ! -d "/mnt/pipelinedb/data" ] || [ ! "$(ls -A /mnt/pipelinedb/data)" ]; then
+    # Work around for connecting to the master
+    apt-get install netcat -y
+    while ! nc -z pipelinedb 5432 > /dev/null 2>&1
+    do
+        echo "waiting until the connection to the master succeeds..."
+        sleep 3
+    done
+    mkdir -p /mnt/pipelinedb
+    chmod 777 /mnt/pipelinedb
+    su - pipeline -c "/usr/lib/pipelinedb/bin/pipeline-basebackup -X stream -D /mnt/pipelinedb/data -h pipelinedb -p 5432 -U replicator"
+    cp /scripts/conf/*.conf /mnt/pipelinedb/data/
+fi
+
+exec su - pipeline -c "pipelinedb -D /mnt/pipelinedb/data"

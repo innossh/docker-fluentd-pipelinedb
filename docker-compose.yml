@@ -1,27 +1,36 @@
-pipelinedb:
-  build: ./pipelinedb
-  ports:
-    - "5432:5432"
-
-pipelinedbslave:
-  build: ./pipelinedbslave
-  ports:
-    - "6544:6544"
-  links:
-    - "pipelinedb"
-
-fluentd:
-  build: ./fluentd
-  ports:
-    - "24224:24224"
-  links:
-    - "pipelinedb"
-
-nginx:
-  build: ./nginx
-  ports:
-    - "80:80"
-  log_driver: fluentd
-  log_opt:
-    fluentd-address: "localhost:24224"
-    fluentd-tag: "docker.{{.ID}}"
+version: '2'
+services:
+  pipelinedb:
+    image: pipelinedb/pipelinedb:0.9.5
+    volumes:
+      - ./pipelinedb/master/scripts/startpipeline:/scripts/startpipeline
+      - ./pipelinedb/master/scripts/conf:/scripts/conf
+    ports:
+      - "5432:5432"
+  pipelinedbslave:
+    image: pipelinedb/pipelinedb:0.9.5
+    volumes:
+      - ./pipelinedb/slave/scripts/startpipeline:/scripts/startpipeline
+      - ./pipelinedb/slave/scripts/conf:/scripts/conf
+    ports:
+      - "6544:6544"
+    depends_on:
+      - "pipelinedb"
+  fluentd:
+    build: ./fluentd
+    ports:
+      - "24224:24224"
+  nginx:
+    image: nginx:1.10.1
+    ports:
+      - "80:80"
+    volumes:
+      - ./nginx/conf.d:/etc/nginx/conf.d
+      - ./nginx/html:/var/www/html
+    logging:
+      driver: fluentd
+      options:
+        fluentd-address: "localhost:24224"
+        tag: "docker.{{.Name}}"
+    depends_on:
+      - "fluentd"

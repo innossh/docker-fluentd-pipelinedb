@@ -1,0 +1,36 @@
+#!/bin/bash
+# ref. https://raw.githubusercontent.com/pipelinedb/pipelinedb/0.9.5/pkg/docker/scripts/startpipeline
+
+set -e
+
+# Initialize database if:
+# 1) data directory does not exist
+#    (when data directory volume is not bind-mounted from host;
+#     example: docker run -d pipelinedb), or,
+# 2) data directory already exists, but is empty
+#    (when data directory volume has been bind-mounted from host;
+#     example: docker run -d -v host_volume:/mnt/pipelinedb/data pipelinedb).
+if [ ! -d "/mnt/pipelinedb/data" ] || [ ! "$(ls -A /mnt/pipelinedb/data)" ]; then
+    mkdir -p /mnt/pipelinedb/data
+    sudo chmod 777 /mnt/pipelinedb
+    chown pipeline /mnt/pipelinedb/data
+    su - pipeline -c "pipeline-init --encoding=UTF8 -D /mnt/pipelinedb/data"
+    su - pipeline -c "pipeline-ctl -D /mnt/pipelinedb/data -w start"
+    psql -U pipeline -c "ALTER USER pipeline PASSWORD 'pipeline'"
+    psql -U pipeline << EOS
+CREATE STREAM nginx_accesslogs (time timestamp, path text, code text);
+CREATE CONTINUOUS VIEW v_nginx_accesslogs AS
+SELECT
+    date_trunc('minute', time::timestamp) AS minute,
+    path::text,
+    code::text,
+    count(*) AS total_count
+FROM nginx_accesslogs
+GROUP BY minute, path, code;
+EOS
+    psql -U pipeline -c "CREATE ROLE replicator WITH LOGIN REPLICATION;"
+    su - pipeline -c "pipeline-ctl -D /mnt/pipelinedb/data -w stop"
+    cp /scripts/conf/*.conf /mnt/pipelinedb/data/
+fi
+
+exec su - pipeline -c "pipelinedb -D /mnt/pipelinedb/data"
